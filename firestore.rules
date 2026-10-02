@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile Validation Blueprint
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 120 &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+             data.xp is number && data.xp >= 0 &&
+             data.level is number && data.level >= 1 &&
+             data.bestWpm is number && data.bestWpm >= 0 &&
+             (!('avgWpm' in data) || (data.avgWpm is number && data.avgWpm >= 0)) &&
+             (!('avgAccuracy' in data) || (data.avgAccuracy is number && data.avgAccuracy >= 0 && data.avgAccuracy <= 100)) &&
+             data.totalWordsTyped is number && data.totalWordsTyped >= 0 &&
+             (!('totalTestsCompleted' in data) || (data.totalTestsCompleted is number && data.totalTestsCompleted >= 0)) &&
+             (!('totalPracticeTimeSeconds' in data) || (data.totalPracticeTimeSeconds is number && data.totalPracticeTimeSeconds >= 0)) &&
+             (!('dailyStreak' in data) || (data.dailyStreak is number && data.dailyStreak >= 0)) &&
+             (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 20));
+    }
+
+    // User Test Record Validation Blueprint
+    function isValidUserTestRecord(data, userId) {
+      return data.testId is string && data.testId.size() <= 128 &&
+             data.userId == userId &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             data.mode is string && data.mode in ['practice', 'lesson', 'challenge'] &&
+             data.wpm is number && data.wpm >= 0 &&
+             data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100 &&
+             data.timeSeconds is number && data.timeSeconds >= 0 &&
+             (!('characterCount' in data) || (data.characterCount is number && data.characterCount >= 0)) &&
+             (!('errors' in data) || (data.errors is number && data.errors >= 0));
+    }
+
+    // User Profile Collection & Documents
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Disallow scraping all users
+
+      allow create: if isOwner(userId) && isValidId(userId) &&
+                       incoming().userId == userId &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isOwner(userId) && isValidId(userId) &&
+                       incoming().userId == existing().userId &&
+                       isValidUserProfile(incoming());
+
+      allow delete: if false; // Protect user accounts from accidental deletion
+
+      // Subcollection: Test Records
+      match /tests/{testId} {
+        allow get, list: if isOwner(userId) && isValidId(userId);
+
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(testId) &&
+                         incoming().userId == userId &&
+                         isValidUserTestRecord(incoming(), userId);
+
+        allow update: if false; // Test records are immutable once recorded
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(testId);
+      }
+    }
+  }
+}

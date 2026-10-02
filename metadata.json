@@ -1,0 +1,7 @@
+{
+  "name": "SwiftType - Liquid Glass Typing Master",
+  "description": "Master typing speed with structured lessons, interactive games, daily paragraph challenges, virtual keyboard finger guide, and comprehensive WPM analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

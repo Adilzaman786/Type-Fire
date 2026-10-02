@@ -1,0 +1,150 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with touch typing statistics, XP progression, badges, and records.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the typist.",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address.",
+          "maxLength": 120
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile avatar image URL.",
+          "maxLength": 500
+        },
+        "xp": {
+          "type": "number",
+          "description": "Accumulated experience points."
+        },
+        "level": {
+          "type": "number",
+          "description": "Calculated typist level."
+        },
+        "bestWpm": {
+          "type": "number",
+          "description": "Personal best net WPM."
+        },
+        "avgWpm": {
+          "type": "number",
+          "description": "Career average WPM."
+        },
+        "avgAccuracy": {
+          "type": "number",
+          "description": "Career average accuracy percentage."
+        },
+        "totalWordsTyped": {
+          "type": "number",
+          "description": "Total words typed across all sessions."
+        },
+        "totalTestsCompleted": {
+          "type": "number",
+          "description": "Total tests, lessons, and drills finished."
+        },
+        "totalPracticeTimeSeconds": {
+          "type": "number",
+          "description": "Cumulative practice duration in seconds."
+        },
+        "dailyStreak": {
+          "type": "number",
+          "description": "Consecutive days practice streak."
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "Last active calendar date (YYYY-MM-DD).",
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account registration timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last sync timestamp."
+        }
+      },
+      "required": ["userId", "displayName", "email", "xp", "level", "bestWpm", "totalWordsTyped"]
+    },
+    "UserTestRecord": {
+      "title": "UserTestRecord",
+      "description": "Detailed log of a single typing session, lesson, or benchmark test.",
+      "type": "object",
+      "properties": {
+        "testId": {
+          "type": "string",
+          "description": "Unique test identifier.",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of typist who took test.",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of lesson, paragraph, or test.",
+          "maxLength": 150
+        },
+        "mode": {
+          "type": "string",
+          "description": "Type of test taken.",
+          "enum": ["practice", "lesson", "challenge"]
+        },
+        "wpm": {
+          "type": "number",
+          "description": "Net WPM achieved."
+        },
+        "accuracy": {
+          "type": "number",
+          "description": "Accuracy percentage achieved."
+        },
+        "timeSeconds": {
+          "type": "number",
+          "description": "Duration in seconds."
+        },
+        "characterCount": {
+          "type": "number",
+          "description": "Total characters typed."
+        },
+        "errors": {
+          "type": "number",
+          "description": "Total mistakes made."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when test completed."
+        }
+      },
+      "required": ["testId", "userId", "title", "mode", "wpm", "accuracy", "timeSeconds"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "UserProfile"
+      },
+      "description": "Stores user typing profile, statistics, XP, and badges."
+    },
+    "/users/{userId}/tests/{testId}": {
+      "schema": {
+        "$ref": "UserTestRecord"
+      },
+      "description": "Stores chronological logs of completed typing sessions and tests."
+    }
+  }
+}
